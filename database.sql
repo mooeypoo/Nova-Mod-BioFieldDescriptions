@@ -1,0 +1,1 @@
+ALTER TABLE  `nova_characters_fields` ADD  `field_desc` TEXT NOT NULL AFTER  `field_name`
