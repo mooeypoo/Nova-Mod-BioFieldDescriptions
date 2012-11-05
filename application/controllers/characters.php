@@ -453,12 +453,15 @@ class Characters extends Nova_characters {
 									'id' => $field->field_fid,
 									'class' => $field->field_class,
 									'value' => ($row !== false) ? $row->data_value : '',
-									/*** ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
-									'rel' => 'popover',
-									'data-content' => htmlentities($field->field_desc),
-									'data-original-title' => 'Field Instructions',
-									/*** END OF ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
 								);
+									/*** ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
+									if (strlen($field->field_desc)>0) {
+										$input['rel'] = 'popover';
+										$input['class'] = $field->field_class." btn btn-success";
+										$input['data-content'] = nl2br(htmlentities($field->field_desc));
+										$input['data-original-title'] = 'Field Instructions';
+									}
+									/*** END OF ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
 								
 								$data['join'][$sid]['fields'][$f_id]['input'] = form_input($input);
 							break;
@@ -469,13 +472,16 @@ class Characters extends Nova_characters {
 									'id' => $field->field_fid,
 									'class' => $field->field_class,
 									'value' => ($row !== false) ? $row->data_value : '',
-									/*** ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
-									'rel' => 'popover',
-									'data-original-title' => 'Field Instructions',
-									'data-content' => htmlentities($field->field_desc),
-									/*** END OF ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
 									'rows' => $field->field_rows
 								);
+									/*** ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
+									if (strlen($field->field_desc)>0) {
+										$input['rel'] = 'popover';
+										$input['class'] = $field->field_class." btn btn-success";
+										$input['data-content'] = nl2br(htmlentities($field->field_desc));
+										$input['data-original-title'] = 'Field Instructions';
+									}
+									/*** END OF ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
 								
 								$data['join'][$sid]['fields'][$f_id]['input'] = form_textarea($input);
 							break;
@@ -496,7 +502,9 @@ class Characters extends Nova_characters {
 									}
 								}
 									/*** ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
-									$extrafield = "rel='popover' data-content='".htmlentities ($field->field_desc)."' data-original-title='Field Instructions'";
+									if (strlen($field->field_desc)>0) {
+										$extrafield = "rel='popover' data-content='".nl2br(htmlentities ($field->field_desc))."' data-original-title='Field Instructions' class='".$field->field_class." btn btn-success'";
+									}
 									/*** END OF ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
 
 								$data['join'][$sid]['fields'][$f_id]['input'] = form_dropdown($field->field_id, $input, $data_val, $extrafield);

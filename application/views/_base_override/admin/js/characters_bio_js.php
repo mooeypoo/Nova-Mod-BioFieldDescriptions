@@ -10,9 +10,15 @@
 	background-color: #34363a !important;
 	color: #fff !important;
 	border-bottom: none !important;
+	font-size: 14px;
+	margin: 0px !important;
+	padding: 5px !important;
 }
 .popover .content {
 	background: #34363a !important;
+	font-size: 11px;
+	margin: 0px !important;
+	padding: 5px !important;
 }
 </style>
 <?php
@@ -22,10 +28,7 @@
 ?>
 <?php $string = random_string('alnum', 8);?>
 
-		<!--script type="text/javascript" src="<?php echo base_url().MODFOLDER.'/assets/js/jquery.lazy.js';?>"></script -->
-<link href="<?php echo base_url() . MODFOLDER;?>/assets/js/css/bootstrap-scaffold.css" rel="stylesheet" type="text/css" media="screen" charset="utf-8" />
-<link href="<?php echo base_url() . MODFOLDER;?>/assets/js/css/bootstrap-popover.css" rel="stylesheet" type="text/css" media="screen" charset="utf-8" />
-<link href="<?php echo base_url() . MODFOLDER;?>/assets/js/css/bootstrap-twipsy.css" rel="stylesheet" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="<?php echo base_url().MODFOLDER;?>/assets/js/css/bootstrap.css" />
 
 <script type="text/javascript">
 	function jq(myid) { 
@@ -34,48 +37,17 @@
 	
 	$(document).ready(function(){
 	
-	/*****************************/
-	/**  BIO FORM DESCRIPTIONS  **/
-	/*****************************/
-	$.lazy({
-		src: '<?php echo base_url() . MODFOLDER;?>/assets/js/bootstrap-twipsy.js',
-		name: 'twipsy',
-		dependencies: {
-			css: ['<?php echo base_url() . MODFOLDER;?>/assets/js/css/bootstrap-twipsy.css']
-		},
-		cache: true
-	});
-	$.lazy({
-		src: '<?php echo base_url() . MODFOLDER;?>/assets/js/bootstrap-popover.js',
-		name: 'popover',
-		dependencies: {
-			js: ['<?php echo base_url() . MODFOLDER;?>/assets/js/bootstrap-twipsy.js'],
-			css: [
-				'<?php echo base_url() . MODFOLDER;?>/assets/js/css/bootstrap-twipsy.css',
-				'<?php echo base_url() . MODFOLDER;?>/assets/js/css/bootstrap-popover.css'
-			]
-		},
-		cache: true
-	});
-			
-	$('[rel=tooltip]').twipsy({
-		animate: false,
-		offset: 5,
-		placement: 'right'
-	});
-				
-	
-	$('[rel=popover]').popover({
-		animate: false,
-		offset: 5,
-		placement: 'right'
-	});
-				
-
-	/*********************************/
-	/**  END BIO FORM DESCRIPTIONS  **/
-	/*********************************/
-	
+		/*****************************/
+		/**  BIO FORM DESCRIPTIONS  **/
+		/*****************************/
+		$('[rel=popover]').popover({
+			animate: false,
+			offset: 5,
+			placement: 'right'
+		});
+		/*********************************/
+		/**  END BIO FORM DESCRIPTIONS  **/
+		/*********************************/
 	
 	
 	
@@ -267,5 +239,9 @@
 		
 		$('#loading').hide();
 		$('#loaded').removeClass('hidden');
+
+	
+
+		
 	});
 </script>
