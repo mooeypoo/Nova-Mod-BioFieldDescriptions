@@ -361,12 +361,16 @@ class Site extends Nova_site {
 						'name' => 'field_name',
 						'id' => 'field_name',
 						'value' => $row->field_name),
+					/* ****************************************** */
+					/* ADDITION FOR THE MOD BIO FIELD DESCRIPTION */
 					'desc' => array(
 						'name' => 'field_desc',
 						'id' => 'field_desc',
 						'rows'=> 4,
 						'cols'=> 10),
 					'descval' => $row->field_desc,
+					/* END ADDITION FOR THE MOD BIO FIELD DESCRIPTION */
+					/* ********************************************** */
 					'class' => array(
 						'name' => 'field_class',
 						'id' => 'field_class',

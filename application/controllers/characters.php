@@ -454,6 +454,7 @@ class Characters extends Nova_characters {
 									'class' => $field->field_class,
 									'value' => ($row !== false) ? $row->data_value : '',
 								);
+									/* ********************************************** */
 									/*** ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
 									if (strlen($field->field_desc)>0) {
 										$input['rel'] = 'popover';
@@ -462,6 +463,7 @@ class Characters extends Nova_characters {
 										$input['data-original-title'] = 'Field Instructions';
 									}
 									/*** END OF ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
+									/* ***************************************************** */
 								
 								$data['join'][$sid]['fields'][$f_id]['input'] = form_input($input);
 							break;
@@ -474,6 +476,7 @@ class Characters extends Nova_characters {
 									'value' => ($row !== false) ? $row->data_value : '',
 									'rows' => $field->field_rows
 								);
+									/* ********************************************** */
 									/*** ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
 									if (strlen($field->field_desc)>0) {
 										$input['rel'] = 'popover';
@@ -482,6 +485,7 @@ class Characters extends Nova_characters {
 										$input['data-original-title'] = 'Field Instructions';
 									}
 									/*** END OF ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
+									/* ***************************************************** */
 								
 								$data['join'][$sid]['fields'][$f_id]['input'] = form_textarea($input);
 							break;
@@ -501,11 +505,13 @@ class Characters extends Nova_characters {
 										$input[$value->value_field_value] = $value->value_content;
 									}
 								}
+									/* ********************************************** */
 									/*** ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
 									if (strlen($field->field_desc)>0) {
 										$extrafield = "rel='popover' data-content='".nl2br(htmlentities ($field->field_desc))."' data-original-title='Field Instructions' class='".$field->field_class." btn btn-success'";
 									}
 									/*** END OF ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
+									/* ***************************************************** */
 
 								$data['join'][$sid]['fields'][$f_id]['input'] = form_dropdown($field->field_id, $input, $data_val, $extrafield);
 							break;
