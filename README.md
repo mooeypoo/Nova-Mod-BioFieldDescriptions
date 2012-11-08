@@ -58,7 +58,7 @@ and
 ```
 
 Do this to both characters.php controller and site.php controller.
-##### 2.3.2 Copying over View files:
+#### 2.4 Copying over View files:
 It is highly recommended you back up your views/_base_override/admin folder, as the view file in the mod might override an existing modified version in your nova install.
 
 There are two files in the view folder:
