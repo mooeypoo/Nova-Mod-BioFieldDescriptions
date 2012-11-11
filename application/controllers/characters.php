@@ -459,7 +459,7 @@ class Characters extends Nova_characters {
 									if (strlen($field->field_desc)>0) {
 										$input['rel'] = 'popover';
 										$input['class'] = $field->field_class." btn btn-success";
-										$input['data-content'] = nl2br(htmlentities($field->field_desc));
+										$input['data-content'] = (htmlentities($field->field_desc));
 										$input['data-original-title'] = 'Field Instructions';
 									}
 									/*** END OF ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
@@ -481,7 +481,7 @@ class Characters extends Nova_characters {
 									if (strlen($field->field_desc)>0) {
 										$input['rel'] = 'popover';
 										$input['class'] = $field->field_class." btn btn-success";
-										$input['data-content'] = nl2br(htmlentities($field->field_desc));
+										$input['data-content'] = (htmlentities($field->field_desc));
 										$input['data-original-title'] = 'Field Instructions';
 									}
 									/*** END OF ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
@@ -507,8 +507,9 @@ class Characters extends Nova_characters {
 								}
 									/* ********************************************** */
 									/*** ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
+									$extrafield = "";
 									if (strlen($field->field_desc)>0) {
-										$extrafield = "rel='popover' data-content='".nl2br(htmlentities ($field->field_desc))."' data-original-title='Field Instructions' class='".$field->field_class." btn btn-success'";
+										$extrafield = "rel='popover' data-content='".(htmlentities ($field->field_desc))."' data-original-title='Field Instructions' class='".$field->field_class." btn btn-success'";
 									}
 									/*** END OF ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
 									/* ***************************************************** */
@@ -715,6 +716,338 @@ class Characters extends Nova_characters {
 		Template::render();
 	}
 	
+	public function create()
+	{
+		Auth::check_access();
+		
+		// grab the level and character ID
+		$level = Auth::get_access_level();
+		
+		// load the resources
+		$this->load->model('positions_model', 'pos');
+		$this->load->model('ranks_model', 'ranks');
+		$this->load->model('applications_model', 'apps');
+		$this->load->helper('utility');
+		
+		if (isset($_POST['submit']))
+		{
+			foreach ($_POST as $key => $value)
+			{
+				if (is_numeric($key))
+				{
+					// build the array
+					$array['fields'][$key] = array(
+						'data_field' => $key,
+						'data_value' => $value,
+						'data_updated' => now()
+					);
+				}
+				else
+				{
+					if ($key == 'type')
+					{
+						if ($value == 'npc')
+						{
+							$array['character']['crew_type'] = 'npc';
+						}
+						else
+						{
+							if ($level == 2 and $value == 'pc')
+							{
+								$array['character']['crew_type'] = 'active';
+							}
+							else
+							{
+								$array['character']['user'] = $this->session->userdata('userid');
+								$array['character']['crew_type'] = 'pending';
+							}
+						}
+					}
+					else
+					{
+						$array['character'][$key] = $value;
+					}
+				}
+			}
+			
+			// get rid of the submit button data and the type value
+			unset($array['character']['submit']);
+			
+			// create the character record and grab the insert ID
+			$update = $this->char->create_character($array['character']);
+			$cid = $this->db->insert_id();
+			
+			// optimize the database
+			$this->sys->optimize_table('characters');
+			
+			if ($array['character']['crew_type'] == 'active' or $array['character']['crew_type'] == 'pending')
+			{
+				$name = array(
+					$array['character']['first_name'],
+					$array['character']['middle_name'],
+					$array['character']['last_name'],
+					$array['character']['suffix'],
+				);
+				
+				$a_update = array(
+					'app_character' => $cid,
+					'app_character_name' => parse_name($name),
+					'app_position' => $this->pos->get_position($array['character']['position_1'], 'pos_name'),
+					'app_date' => now(),
+					'app_action' => ($array['character']['crew_type'] == 'pending') ? '' : 'created',
+				);
+				
+				$this->apps->insert_application($a_update);
+			}
+			
+			// create the fields in the data table
+			$create = $this->char->create_character_data_fields($cid);
+			
+			foreach ($array['fields'] as $k => $v)
+			{
+				$update += $this->char->update_character_data($k, $cid, $v);
+			}
+			
+			if ($update > 0)
+			{
+				if ($array['character']['crew_type'] == 'pending')
+				{
+					$user = $this->user->get_user($array['character']['user']);
+					
+					$gm_data = array(
+						'email' => $user->email,
+						'name' => $user->name,
+						'id' => $cid,
+						'user' => $array['character']['user']
+					);
+					
+					// execute the email method
+					$email_gm = ($this->options['system_email'] == 'on') ? $this->_email('pending', $gm_data) : false;
+				}
+					
+				$message = sprintf(
+					lang('flash_success'),
+					ucfirst(lang('global_character')),
+					lang('actions_created'),
+					''
+				);
+
+				$flash['status'] = 'success';
+				$flash['message'] = text_output($message);
+			}
+			else
+			{
+				$message = sprintf(
+					lang('flash_failure'),
+					ucfirst(lang('global_character')),
+					lang('actions_created'),
+					''
+				);
+
+				$flash['status'] = 'error';
+				$flash['message'] = text_output($message);
+			}
+			
+			// set the flash message
+			$this->_regions['flash_message'] = Location::view('flash', $this->skin, 'admin', $flash);
+		}
+		
+		// grab the join fields
+		$sections = $this->char->get_bio_sections();
+		
+		if ($sections->num_rows() > 0)
+		{
+			foreach ($sections->result() as $sec)
+			{
+				$sid = $sec->section_id;
+				
+				// set the section name
+				$data['join'][$sid]['name'] = $sec->section_name;
+				
+				// grab the fields for the given section
+				$fields = $this->char->get_bio_fields($sec->section_id);
+				
+				if ($fields->num_rows() > 0)
+				{
+					foreach ($fields->result() as $field)
+					{
+						$f_id = $field->field_id;
+						
+						// set the page label
+						$data['join'][$sid]['fields'][$f_id]['field_label'] = $field->field_label_page;
+						
+						switch ($field->field_type)
+						{
+							case 'text':
+								$input = array(
+									'name' => $field->field_id,
+									'id' => $field->field_fid,
+									'class' => $field->field_class,
+									'value' => '',
+								);
+									/* ********************************************** */
+									/*** ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
+									if (strlen($field->field_desc)>0) {
+										$input['rel'] = 'popover';
+										$input['class'] = $field->field_class." btn btn-success";
+										$input['data-content'] = (htmlentities($field->field_desc));
+										$input['data-original-title'] = 'Field Instructions';
+									}
+									/*** END OF ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
+									/* ***************************************************** */
+								
+								
+								$data['join'][$sid]['fields'][$f_id]['input'] = form_input($input);
+							break;
+								
+							case 'textarea':
+								$input = array(
+									'name' => $field->field_id,
+									'id' => $field->field_fid,
+									'class' => $field->field_class,
+									'value' => '',
+									'rows' => $field->field_rows
+								);
+									/* ********************************************** */
+									/*** ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
+									if (strlen($field->field_desc)>0) {
+										$input['rel'] = 'popover';
+										$input['class'] = $field->field_class." btn btn-success";
+										$input['data-content'] = (htmlentities($field->field_desc));
+										$input['data-original-title'] = 'Field Instructions';
+									}
+									/*** END OF ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
+									/* ***************************************************** */
+								
+								
+								$data['join'][$sid]['fields'][$f_id]['input'] = form_textarea($input);
+							break;
+								
+							case 'select':
+								$value = false;
+								$values = false;
+								$input = false;
+							
+								$values = $this->char->get_bio_values($field->field_id);
+								
+								if ($values->num_rows() > 0)
+								{
+									foreach ($values->result() as $value)
+									{
+										$input[$value->value_field_value] = $value->value_content;
+									}
+								}
+									/* ********************************************** */
+									/*** ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
+									$extrafield = "rel='none'";
+									if (strlen($field->field_desc)>0) {
+										$extrafield = "rel='popover' data-content='".(htmlentities ($field->field_desc))."' data-original-title='Field Instructions' class='".$field->field_class." btn btn-success'";
+									}
+									/*** END OF ADDITION FOR THE BIO FIELD DESCRIPTION MOD ***/
+									/* ***************************************************** */
+								
+								
+									$data['join'][$sid]['fields'][$f_id]['input'] = form_dropdown($field->field_id, $input, '',$extrafield);
+							break;
+						}
+					}
+				}
+			}
+		}
+		
+		$rank = $this->ranks->get_rank(1);
+		$rankcat = $this->ranks->get_rankcat($this->rank, 'rankcat_location');
+		
+		// inputs
+		$data['inputs'] = array(
+			'first_name' => array(
+				'name' => 'first_name',
+				'id' => 'first_name',
+				'value' => ''),
+			'middle_name' => array(
+				'name' => 'middle_name',
+				'id' => 'middle_name',
+				'value' => ''),
+			'last_name' => array(
+				'name' => 'last_name',
+				'id' => 'last_name',
+				'value' => ''),
+			'suffix' => array(
+				'name' => 'suffix',
+				'id' => 'suffix',
+				'class' => 'medium',
+				'value' => ''),
+			'position1_id' => 0,
+			'position2_id' => 0,
+			'position1_name' => '',
+			'position2_name' => '',
+			'position1_desc' => '',
+			'position2_desc' => '',
+			'rank_id' => 0,
+			'rank' => array(
+				'src' => Location::rank($this->rank, $rank->rank_image, $rankcat->rankcat_extension),
+				'alt' => $rank->rank_name,
+				'class' => 'image'),
+		);
+		
+		$data['type'] = array(
+			'pc' => ucwords(lang('status_playing') .' '. lang('global_character')),
+			'npc' => ucwords(lang('status_nonplaying') .' '. lang('global_character')),
+		);
+		
+		$data['header'] = ucwords(lang('actions_create') .' '. lang('global_character'));
+		
+		// submit button
+		$data['button'] = array(
+			'submit' => array(
+				'type' => 'submit',
+				'class' => 'button-main',
+				'name' => 'submit',
+				'value' => 'submit',
+				'content' => ucwords(lang('actions_submit'))),
+		);
+		
+		$data['images'] = array(
+			'loading' => array(
+				'src' => Location::img('loading-circle.gif', $this->skin, 'admin'),
+				'alt' => lang('actions_loading'),
+				'class' => 'image'),
+		);
+		
+		$data['label'] = array(
+			'character' => ucfirst(lang('global_character')),
+			'choose_char' => ucwords(lang('actions_choose') .' '. lang('labels_a') .' '. lang('global_character') .' '. lang('labels_to')
+				.' '. lang('actions_edit')),
+			'fname' => ucwords(lang('order_first') .' '. lang('labels_name')),
+			'images' => ucfirst(lang('labels_images')),
+			'info' => ucfirst(lang('labels_info')),
+			'lname' => ucwords(lang('order_last') .' '. lang('labels_name')),
+			'mname' => ucwords(lang('order_middle') .' '. lang('labels_name')),
+			'myuploads' => ucwords(lang('labels_my') .' '. lang('labels_uploads')),
+			'other' => ucfirst(lang('labels_other')),
+			'position1' => ucwords(lang('order_first') .' '. lang('global_position')),
+			'position2' => ucwords(lang('order_second') .' '. lang('global_position')),
+			'rank' => ucfirst(lang('global_rank')),
+			'suffix' => ucfirst(lang('labels_suffix')),
+			'type' => ucwords(lang('global_character') .' '. lang('labels_type')),
+			'type_active' => ucwords(lang('status_active') .' '. lang('global_characters')),
+			'type_inactive' => ucwords(lang('status_inactive') .' '. lang('global_characters')),
+			'type_npc' => ucwords(lang('status_nonplaying') .' '. lang('global_characters')),
+			'upload' => ucwords(lang('actions_upload') .' '. lang('labels_images') .' '. RARROW),
+		);
+		
+		$js_data['rankloc'] = $this->rank;
+		
+		$this->_regions['content'] = Location::view('characters_create', $this->skin, 'admin', $data);
+		$this->_regions['javascript'] = Location::js('characters_create_js', $this->skin, 'admin', $js_data);
+		$this->_regions['title'].= $data['header'];
+		
+		Template::assign($this->_regions);
+		
+		Template::render();
+	}
+	
+
 	/***************************/
 	/*  BIO FORM DESCRIPTIONS  */
 	/***************************/

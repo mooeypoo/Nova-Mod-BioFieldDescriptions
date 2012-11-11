@@ -1,4 +1,5 @@
 <?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');?>
+<?php $string = random_string('alnum', 8);?>
 
 <?php
 	/***************************/
@@ -21,14 +22,13 @@
 	padding: 5px !important;
 }
 </style>
+<link rel="stylesheet" href="<?php echo base_url().MODFOLDER;?>/assets/js/css/bootstrap.css" />
 <?php
 	/*********************************/
 	/**  END BIO FORM DESCRIPTIONS  **/
 	/*********************************/
 ?>
-<?php $string = random_string('alnum', 8);?>
 
-<link rel="stylesheet" href="<?php echo base_url().MODFOLDER;?>/assets/js/css/bootstrap.css" />
 
 <script type="text/javascript">
 	function jq(myid) { 

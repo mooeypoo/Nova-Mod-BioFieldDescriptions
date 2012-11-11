@@ -10,6 +10,8 @@ Fill out your desired instructions, and save.
 The descriptions will pop-up when a member hovers over the input.
 
 ## Version
+### Version 1.1
+Added support for join form and 'new character' form.
 ### Version 1.0
 Working extension. 
 
